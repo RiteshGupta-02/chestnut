@@ -1,0 +1,10 @@
+pandas
+numpy
+matplotlib
+sklearn
+pytorch
+shutil
+os
+glob
+pathlib
+-e .
