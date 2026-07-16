@@ -15,6 +15,7 @@ Usage:
 """
 
 import os
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from PIL import Image
@@ -24,6 +25,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as T
 
+os.chdir(Path(__file__).resolve().parent)
 
 # ─── Label definitions ──────────────────────────────────────────────────────
 
@@ -324,7 +326,7 @@ if __name__ == "__main__":
     """
     import sys
 
-    data_dir = sys.argv[1] if len(sys.argv) > 1 else "../dataset/"
+    data_dir = sys.argv[1] if len(sys.argv) > 1 else "../../dataset/"
 
     print("=" * 55)
     print("  ChestX-ray14 Dataset — sanity check")
