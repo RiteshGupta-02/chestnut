@@ -7,4 +7,5 @@ shutil
 os
 glob
 pathlib
+torch
 -e .

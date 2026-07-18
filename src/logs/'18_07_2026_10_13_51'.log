@@ -1,0 +1,23 @@
+[2026-07-18 10:13:51,587] 70 - INFO - Started training...
+[2026-07-18 10:13:51,674] 72 - INFO - Loader(s) and positional weights are loaded successfully
+[2026-07-18 10:13:51,689] 75 - INFO - Using device: cuda
+[2026-07-18 10:13:51,949] 86 - INFO - Using 10 epochs..
+[2026-07-18 10:14:04,226] 99 - INFO - Epoch 1/10 | Train loss: 0.0348 | Val loss: 1.1183
+[2026-07-18 10:14:04,305] 105 - INFO -   New best model (val_loss: 1.1183)
+[2026-07-18 10:14:18,742] 99 - INFO - Epoch 2/10 | Train loss: 0.0330 | Val loss: 1.0856
+[2026-07-18 10:14:18,840] 105 - INFO -   New best model (val_loss: 1.0856)
+[2026-07-18 10:14:34,021] 99 - INFO - Epoch 3/10 | Train loss: 0.0330 | Val loss: 1.0815
+[2026-07-18 10:14:34,141] 105 - INFO -   New best model (val_loss: 1.0815)
+[2026-07-18 10:14:49,698] 99 - INFO - Epoch 4/10 | Train loss: 0.0383 | Val loss: 1.0761
+[2026-07-18 10:14:49,797] 105 - INFO -   New best model (val_loss: 1.0761)
+[2026-07-18 10:15:06,129] 99 - INFO - Epoch 5/10 | Train loss: 0.0381 | Val loss: 1.0750
+[2026-07-18 10:15:06,222] 105 - INFO -   New best model (val_loss: 1.0750)
+[2026-07-18 10:15:22,523] 99 - INFO - Epoch 6/10 | Train loss: 0.0426 | Val loss: 1.0544
+[2026-07-18 10:15:22,632] 105 - INFO -   New best model (val_loss: 1.0544)
+[2026-07-18 10:15:40,440] 99 - INFO - Epoch 7/10 | Train loss: 0.0435 | Val loss: 1.0597
+[2026-07-18 10:15:56,474] 99 - INFO - Epoch 8/10 | Train loss: 0.0258 | Val loss: 1.0566
+[2026-07-18 10:16:12,643] 99 - INFO - Epoch 9/10 | Train loss: 0.0431 | Val loss: 1.0505
+[2026-07-18 10:16:12,736] 105 - INFO -   New best model (val_loss: 1.0505)
+[2026-07-18 10:16:28,181] 99 - INFO - Epoch 10/10 | Train loss: 0.0409 | Val loss: 1.0403
+[2026-07-18 10:16:28,275] 105 - INFO -   New best model (val_loss: 1.0403)
+[2026-07-18 10:16:28,276] 111 - INFO - Training completed in 0:02:36.326244 !!!
