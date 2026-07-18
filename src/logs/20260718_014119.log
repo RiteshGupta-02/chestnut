@@ -1,4 +1,0 @@
-[2026-07-18 01:41:19,401] 64 - INFO - Started training...
-[2026-07-18 01:41:19,495] 66 - INFO - Loader(s) and positional weights are loaded successfully
-[2026-07-18 01:41:19,517] 69 - INFO - Using device: cuda
-[2026-07-18 01:41:20,028] 79 - INFO - Using 10 epochs..

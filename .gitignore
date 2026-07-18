@@ -6,3 +6,4 @@ dataset/
 *.log
 logs/
 src/logs/
+*.tar
