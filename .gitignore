@@ -2,3 +2,7 @@ dataset/
 *.pdf
 *.ipynb
 *pycache*/
+*.zip
+*.log
+logs/
+src/logs/
