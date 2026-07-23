@@ -1,0 +1,63 @@
+{
+  "timestamp": "20260719_193556",
+  "mean_auroc": 0.6153846153846154,
+  "paper_mean": 0.8413785714285714,
+  "per_disease": {
+    "Atelectasis": {
+      "auroc": 1,
+      "n_positive": 34
+    },
+    "Cardiomegaly": {
+      "auroc": 1,
+      "n_positive": 8
+    },
+    "Effusion": {
+      "auroc": 1,
+      "n_positive": 48
+    },
+    "Infiltration": {
+      "auroc": 0,
+      "n_positive": 44
+    },
+    "Mass": {
+      "auroc": 1,
+      "n_positive": 15
+    },
+    "Nodule": {
+      "auroc": 0,
+      "n_positive": 12
+    },
+    "Pneumonia": {
+      "auroc": 0,
+      "n_positive": 10
+    },
+    "Pneumothorax": {
+      "auroc": 1,
+      "n_positive": 23
+    },
+    "Consolidation": {
+      "auroc": 1,
+      "n_positive": 17
+    },
+    "Edema": {
+      "auroc": 0,
+      "n_positive": 8
+    },
+    "Emphysema": {
+      "auroc": 1,
+      "n_positive": 11
+    },
+    "Fibrosis": {
+      "auroc": 1,
+      "n_positive": 5
+    },
+    "Pleural_Thickening": {
+      "auroc": 0,
+      "n_positive": 16
+    },
+    "Hernia": {
+      "auroc": null,
+      "n_positive": 0
+    }
+  }
+}

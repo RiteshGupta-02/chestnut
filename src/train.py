@@ -2,6 +2,7 @@ from model import get_model, cheXNet
 from chestxray_dataset import get_dataloaders
 from exception import CustomException
 
+import os
 import torch
 import torch.nn as nn
 from pathlib import Path
@@ -80,7 +81,7 @@ def main():
         logging.info("Started training...")
         batch_size = 32
         num_workers = 4
-    train_loader, val_loader, test_loader, pos_weights = get_dataloaders(Path("../dataset/"),batch_size=batch_size,num_workers=num_workers)
+    train_loader, val_loader, _, pos_weights = get_dataloaders(Path("../dataset/"),batch_size=batch_size,num_workers=num_workers)
     logging.info("Loader(s) and positional weights are loaded successfully")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -127,7 +128,9 @@ def main():
             if val_loss < best_val_loss:
                 epochs_no_improve = 0
                 best_val_loss = val_loss
-                save_checkpoint(model, epoch+1, val_loss, Path(__file__).parent)
+                check_point_path = Path.joinpath(Path(__file__).parent,"checkpoint")
+                os.makedirs(check_point_path, exist_ok=True)
+                save_checkpoint(model, epoch+1, val_loss, check_point_path)
                 logging.info(f"  New best model (val_loss: {val_loss:.4f})")
             else:
                 epochs_no_improve += 1
@@ -141,6 +144,7 @@ def main():
     end_time = datetime.now()
     total_time_run = end_time - start_time
     logging.info(f"Training completed in {total_time_run} !!!")
+    return model
 
 if __name__ == "__main__":
     main()
