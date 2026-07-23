@@ -36,9 +36,10 @@ def train_one_epoch(model, loader, criterion, optimizer, device, epoch):
             batch_loss = criterion(outputs, label)
             batch_loss.backward()
             optimizer.step()
-            loss += batch_loss.item()
             if batch_idx % 100 == 0:
                 logging.info(f"  Epoch {epoch} | Batch {batch_idx}/{len(loader)} | Loss: {batch_loss.item():.4f}")
+            loss += batch_loss.item()
+            
         except CustomException as e:
             logging.info("exception",e)
             continue
