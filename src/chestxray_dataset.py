@@ -86,7 +86,7 @@ class ChestXray14Dataset(Dataset):
         if not os.path.exists(img_path):
             img_No = int(Path(row["Image Index"]).stem.replace("_",""))
             img = None
-            img_number = [1336000, 3923014, 6585007, 9232004, 11558008, 13774027, 16051010, 18387035, 20945050, 24718000, 28173003]
+            img_number = [1336000, 3923014, 6585007, 9232004, 11558008, 13774026, 16051010, 18387035, 20945050, 24718000, 28173003]
             for i,num in enumerate(img_number,start=1):
                 if img_No < num:
                     img = image_lookup_dict[i]
