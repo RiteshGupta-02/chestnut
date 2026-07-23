@@ -24,6 +24,7 @@ def get_model(num_classes = 14,device = 'cpu'):
 
 if __name__ == "__main__":
     model = get_model(num_classes=14, device='cpu')
+    print(model)
     dummy = torch.randn(1, 3, 224, 224)  # fake one image
     output = model(dummy)
     print(output.shape)  # should print torch.Size([1, 14])

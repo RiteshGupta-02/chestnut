@@ -1,11 +1,7 @@
-pandas
 numpy
+pandas
 matplotlib
-sklearn
-pytorch
-shutil
-os
-glob
-pathlib
+scikit-learn
 torch
--e .
+torchvision
+Pillow
