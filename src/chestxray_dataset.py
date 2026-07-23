@@ -49,7 +49,7 @@ ALL_DISEASES = [
 # When all 14 probabilities are low, that implicitly means a healthy/normal scan.
 NUM_CLASSES = len(ALL_DISEASES)  # 14
 
-
+image_lookup_dict = {i:f"/kaggle/input/datasets/organizations/nih-chest-xrays/data/images_{i:03d}/images/" for i in range(1,13)}
 # ─── Dataset class ───────────────────────────────────────────────────────────
 
 class ChestXray14Dataset(Dataset):
@@ -82,6 +82,19 @@ class ChestXray14Dataset(Dataset):
     def __getitem__(self, idx: int):
         row       = self.df.iloc[idx]
         img_path  = os.path.join(self.image_dir, row["Image Index"])
+
+        if not os.path.exists(img_path):
+            img_No = int(Path(row["Image Index"]).stem.replace("_",""))
+            img = None
+            img_number = [1336000, 3923014, 6585007, 9232004, 11558008, 13774027, 16051010, 18387035, 20945050, 24718000, 28173003]
+            for i,num in enumerate(img_number,start=1):
+                if img_No < num:
+                    img = image_lookup_dict[i]
+                    break
+            if not img:
+                img = image_lookup_dict[12]
+            img_path = os.path.join(img, row["Image Index"])       
+        
 
         # Load as grayscale then convert to RGB
         # DenseNet-121 expects 3-channel input (ImageNet pretrained)
