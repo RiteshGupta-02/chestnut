@@ -15,7 +15,7 @@ import json
 
 logging = setup_logger()
 
-DEBUG = True
+DEBUG = False
 
 ALL_DISEASES = [
     "Atelectasis",

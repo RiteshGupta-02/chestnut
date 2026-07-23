@@ -12,7 +12,7 @@ from logger import setup_logger
 
 logging = setup_logger()
 
-DEBUG = True
+DEBUG = False
 
 def get_optimizer(model):
     return torch.optim.Adam(model.parameters(), lr= 0.0001)
