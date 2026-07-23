@@ -57,9 +57,10 @@ def evaluate(model, loader, criterion, device, epoch):
             label = label.to(device)
             output = model(image)
             batch_loss = criterion(output, label).item()
-            loss += batch_loss
             if batch_idx % 100 == 0:
-                logging.info(f"  Epoch {epoch} | Batch {batch_idx}/{len(loader)} | Loss: {batch_loss.item():.4f}")
+                logging.info(f"  Epoch {epoch} | Batch {batch_idx}/{len(loader)} | Loss: {batch_loss:.4f}")
+            loss += batch_loss
+            
 
     loss /= len(loader)
     return loss
