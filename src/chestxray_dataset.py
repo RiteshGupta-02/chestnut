@@ -268,7 +268,7 @@ def get_dataloaders(data_dir: str,
         (train_loader, val_loader, test_loader, pos_weights) if return_weights=True
     """
 
-    csv_path      = os.path.join(data_dir, "Data_Entry_testing.csv")
+    csv_path      = os.path.join(data_dir, "Data_Entry_2017.csv")
     train_val_txt = os.path.join(data_dir, "train_val_list.txt")
     test_txt      = os.path.join(data_dir, "test_list.txt")
     image_dir     = os.path.join(data_dir, "images")
