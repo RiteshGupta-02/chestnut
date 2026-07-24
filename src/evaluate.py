@@ -123,9 +123,9 @@ def print_auroc_table(auroc_results):
 
     Example output:
     ┌──────────────────────┬──────────┬──────────┬──────────┬───────────────────┬────────┐
-    │ Disease              │ Yours    │ Paper    │ Δ        │ 95% CI            │ Beat?  │
+    │ Disease              │ Yours    │ Paper    │ delta    │ 95% CI            │ Beat?  │
     ├──────────────────────┼──────────┼──────────┼──────────┼───────────────────┼────────┤
-    │ Pneumonia            │ 0.7823   │ 0.7680   │ +0.0143  │ [0.761 - 0.803]   │  ✓     │
+    │ Pneumonia            │ 0.7823   │ 0.7680   │ +0.0143  │ [0.761 - 0.803]   │  true  │
     │ Effusion             │ 0.8501   │ 0.8638   │ -0.0137  │ [0.838 - 0.862]   │        │
 
     Args:
@@ -134,7 +134,7 @@ def print_auroc_table(auroc_results):
     print("\n" + "═" * 80)
     print("  AUROC EVALUATION — CheXNet Replication Results")
     print("═" * 80)
-    print(f"  {'Disease':<22} {'Yours':>8} {'Paper':>8} {'Δ':>8}  {'95% CI':<20} {'Beat?':>6}")
+    print(f"  {'Disease':<22} {'Yours':>8} {'Paper':>8} {'delta':>8}  {'95% CI':<20} {'Beat?':>6}")
     print("─" * 80)
 
     beat_count  = 0
@@ -147,7 +147,7 @@ def print_auroc_table(auroc_results):
         paper_auroc = PAPER_AUROC.get(disease, None)
 
         if your_auroc is None:
-            print(f"  {disease:<22} {'N/A':>8} {paper_auroc:>8.4f} {'—':>8}  {'no positive cases':<20}")
+            print(f"  {disease:<22} {'N/A':>8} {paper_auroc:>8.4f} {'-':>8}  {'no positive cases':<20}")
             continue
 
         delta = your_auroc - paper_auroc
@@ -157,7 +157,7 @@ def print_auroc_table(auroc_results):
         if "ci_lower" in result:
             ci_str = f"[{result['ci_lower']:.4f} - {result['ci_upper']:.4f}]"
 
-        beat = "  ✓" if delta >= 0 else ""
+        beat = "  true" if delta >= 0 else ""
         if delta >= 0:
             beat_count += 1
 
@@ -255,7 +255,7 @@ def plot_roc_curves(all_labels, all_preds, auroc_results,save_path):
     mean_auroc = np.mean([r["auroc"] for r in auroc_results.values()
                           if r.get("auroc") is not None])
     fig.suptitle(
-        f"ROC Curves — CheXNet Replication\nMean AUROC: {mean_auroc:.4f}  "
+        f"ROC Curves - CheXNet Replication\nMean AUROC: {mean_auroc:.4f}  "
         f"(Paper: {np.mean(list(PAPER_AUROC.values())):.4f})",
         fontsize=14, fontweight="bold", y=1.01
     )
