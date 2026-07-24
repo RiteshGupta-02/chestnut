@@ -260,6 +260,25 @@ def plot_roc_curves(all_labels, all_preds, auroc_results,save_path):
         fontsize=14, fontweight="bold", y=1.01
     )
 
+    for ax in fig.axes:
+        for t in ax.texts:
+            s = t.get_text()
+            if "✓" in s:
+                print("Found checkmark:", repr(s))
+
+        title = ax.get_title()
+        if "✓" in title:
+            print("Title:", repr(title))
+
+        legend = ax.get_legend()
+        if legend:
+            for txt in legend.get_texts():
+                if "✓" in txt.get_text():
+                    print("Legend:", repr(txt.get_text()))
+
+    if "✓" in fig._suptitle.get_text():
+        print("Suptitle:", repr(fig._suptitle.get_text()))
+
     plt.tight_layout()
     save_path = Path(save_path)
     save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -274,7 +293,7 @@ def evaluate_full(model, test_loader, device, result_path):
     result = compute_auroc(all_preds,all_labels)
     print_auroc_table(result)
 
-    save_path = (result_path / "plots" / f'{timestamp}')
+    save_path = (result_path / "plots" / f'{timestamp}.png')
     os.makedirs(save_path, exist_ok=True)
 
     plot_roc_curves(all_labels, all_preds, result, save_path)
@@ -332,7 +351,7 @@ def main():
             "paper_mean":   float(np.mean(list(PAPER_AUROC.values()))),
             "per_disease":  result,
         }, f, indent=2)
-    logging.info(f"Results saved → {json_path}")
+    logging.info(f"Results saved : {json_path}")
 
 if "__main__" == __name__:
     main()
