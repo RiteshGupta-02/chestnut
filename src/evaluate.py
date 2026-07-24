@@ -106,7 +106,7 @@ def compute_auroc(all_preds, all_labels):
         score = roc_auc_score(y_true, y_pred)
 
         entry = {
-            "auroc" : round(score),
+            "auroc" : f"{score:.4f}",
             "n_positive" : n_positive
         }
 
@@ -125,8 +125,8 @@ def print_auroc_table(auroc_results):
     ┌──────────────────────┬──────────┬──────────┬──────────┬───────────────────┬────────┐
     │ Disease              │ Yours    │ Paper    │ Δ        │ 95% CI            │ Beat?  │
     ├──────────────────────┼──────────┼──────────┼──────────┼───────────────────┼────────┤
-    │ Pneumonia            │ 0.7823   │ 0.7680   │ +0.0143  │ [0.761 – 0.803]   │  ✓     │
-    │ Effusion             │ 0.8501   │ 0.8638   │ -0.0137  │ [0.838 – 0.862]   │        │
+    │ Pneumonia            │ 0.7823   │ 0.7680   │ +0.0143  │ [0.761 - 0.803]   │  ✓     │
+    │ Effusion             │ 0.8501   │ 0.8638   │ -0.0137  │ [0.838 - 0.862]   │        │
 
     Args:
         auroc_results : dict from compute_auroc()
@@ -155,7 +155,7 @@ def print_auroc_table(auroc_results):
 
         ci_str = ""
         if "ci_lower" in result:
-            ci_str = f"[{result['ci_lower']:.4f} – {result['ci_upper']:.4f}]"
+            ci_str = f"[{result['ci_lower']:.4f} - {result['ci_upper']:.4f}]"
 
         beat = "  ✓" if delta >= 0 else ""
         if delta >= 0:
@@ -222,7 +222,7 @@ def plot_roc_curves(all_labels, all_preds, auroc_results,save_path):
 
             # Confidence interval annotation
             if "ci_lower" in result:
-                ci_text = f"95% CI [{result['ci_lower']:.4f}–{result['ci_upper']:.4f}]"
+                ci_text = f"95% CI [{result['ci_lower']:.4f}-{result['ci_upper']:.4f}]"
                 ax.text(0.97, 0.08, ci_text,
                         ha="right", va="bottom", transform=ax.transAxes,
                         fontsize=7, color="dimgray",
@@ -234,7 +234,7 @@ def plot_roc_curves(all_labels, all_preds, auroc_results,save_path):
                     fontsize=8, color="steelblue")
 
             # Beat/missed indicator
-            beat_str = "✓ Beat paper" if your_auroc >= paper_val else "✗ Below paper"
+            beat_str = "Beat paper" if your_auroc >= paper_val else "Below paper"
             beat_col = "#2E7D32" if your_auroc >= paper_val else "#C62828"
             ax.text(0.97, 0.32, beat_str,
                     ha="right", va="bottom", transform=ax.transAxes,
