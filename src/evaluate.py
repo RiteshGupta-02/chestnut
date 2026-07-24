@@ -267,7 +267,30 @@ def plot_roc_curves(all_labels, all_preds, auroc_results,save_path):
     plt.close()
     logging.info(f"ROC curves saved {save_path}")
 
+def evaluate_full(model, test_loader, device, result_path):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    all_preds, all_labels = get_predictions(model, test_loader, device)
+    result = compute_auroc(all_preds,all_labels)
+    print_auroc_table(result)
 
+    save_path = (result_path / "plots" / f'{timestamp}')
+    os.makedirs(save_path, exist_ok=True)
+
+    plot_roc_curves(all_labels, all_preds, result, save_path)
+
+    json_path = result_path / f"auroc_results_{timestamp}.json"
+    with open(json_path, "w") as f:
+        json.dump({
+            "timestamp":    timestamp,
+            "mean_auroc":   float(np.mean([
+                r["auroc"] for r in result.values()
+                if r.get("auroc") is not None
+            ])),
+            "paper_mean":   float(np.mean(list(PAPER_AUROC.values()))),
+            "per_disease":  result,
+        }, f, indent=2)
+    logging.info(f"Results saved : {json_path}")
+    
 def main():
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
