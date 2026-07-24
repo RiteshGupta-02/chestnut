@@ -268,6 +268,7 @@ def plot_roc_curves(all_labels, all_preds, auroc_results,save_path):
     logging.info(f"ROC curves saved {save_path}")
 
 def evaluate_full(model, test_loader, device, result_path):
+    result_path = Path(result_path)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     all_preds, all_labels = get_predictions(model, test_loader, device)
     result = compute_auroc(all_preds,all_labels)
@@ -290,7 +291,7 @@ def evaluate_full(model, test_loader, device, result_path):
             "per_disease":  result,
         }, f, indent=2)
     logging.info(f"Results saved : {json_path}")
-    
+
 def main():
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
