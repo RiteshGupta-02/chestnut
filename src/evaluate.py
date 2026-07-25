@@ -149,7 +149,7 @@ def print_auroc_table(auroc_results):
         if your_auroc is None:
             print(f"  {disease:<22} {'N/A':>8} {paper_auroc:>8.4f} {'-':>8}  {'no positive cases':<20}")
             continue
-
+        
         delta = float(your_auroc) - float(paper_auroc)
         delta_str = f"{delta:+.4f}"
 
@@ -272,12 +272,12 @@ def evaluate_full(model, test_loader, device, result_path):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     all_preds, all_labels = get_predictions(model, test_loader, device)
     result = compute_auroc(all_preds,all_labels)
-    print_auroc_table(result)
+    # print_auroc_table(result)
 
     save_path = (result_path / "plots" / f'{timestamp}.png')
     os.makedirs(save_path, exist_ok=True)
 
-    plot_roc_curves(all_labels, all_preds, result, save_path)
+    # plot_roc_curves(all_labels, all_preds, result, save_path)
 
     json_path = result_path / f"auroc_results_{timestamp}.json"
     with open(json_path, "w") as f:
@@ -291,6 +291,7 @@ def evaluate_full(model, test_loader, device, result_path):
             "per_disease":  result,
         }, f, indent=2)
     logging.info(f"Results saved : {json_path}")
+    return all_labels, all_preds, result, save_path
 
 def main():
 
