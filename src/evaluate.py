@@ -150,7 +150,7 @@ def print_auroc_table(auroc_results):
             print(f"  {disease:<22} {'N/A':>8} {paper_auroc:>8.4f} {'-':>8}  {'no positive cases':<20}")
             continue
 
-        delta = your_auroc - paper_auroc
+        delta = float(your_auroc) - float(paper_auroc)
         delta_str = f"{delta:+.4f}"
 
         ci_str = ""
@@ -255,29 +255,10 @@ def plot_roc_curves(all_labels, all_preds, auroc_results,save_path):
     mean_auroc = np.mean([r["auroc"] for r in auroc_results.values()
                           if r.get("auroc") is not None])
     fig.suptitle(
-        f"ROC Curves - CheXNet Replication\nMean AUROC: {mean_auroc:.4f}  "
+        f"ROC Curves - CheXNet Replication \nMean AUROC: {mean_auroc:.4f}  "
         f"(Paper: {np.mean(list(PAPER_AUROC.values())):.4f})",
         fontsize=14, fontweight="bold", y=1.01
     )
-
-    for ax in fig.axes:
-        for t in ax.texts:
-            s = t.get_text()
-            if "✓" in s:
-                print("Found checkmark:", repr(s))
-
-        title = ax.get_title()
-        if "✓" in title:
-            print("Title:", repr(title))
-
-        legend = ax.get_legend()
-        if legend:
-            for txt in legend.get_texts():
-                if "✓" in txt.get_text():
-                    print("Legend:", repr(txt.get_text()))
-
-    if "✓" in fig._suptitle.get_text():
-        print("Suptitle:", repr(fig._suptitle.get_text()))
 
     plt.tight_layout()
     save_path = Path(save_path)
