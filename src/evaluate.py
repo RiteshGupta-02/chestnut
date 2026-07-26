@@ -264,6 +264,7 @@ def plot_roc_curves(all_labels, all_preds, auroc_results,save_path):
     plt.tight_layout()
     save_path = Path(save_path)
     save_path.parent.mkdir(parents=True, exist_ok=True)
+
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close()
     logging.info(f"ROC curves saved {save_path}")
@@ -276,7 +277,6 @@ def evaluate_full(model, test_loader, device, result_path):
     print_auroc_table(result)
 
     save_path = (result_path / "plots" / f'{timestamp}.png')
-    os.makedirs(save_path, exist_ok=True)
 
     plot_roc_curves(all_labels, all_preds, result, save_path)
 
