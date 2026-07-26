@@ -150,7 +150,7 @@ def print_auroc_table(auroc_results):
             print(f"  {disease:<22} {'N/A':>8} {paper_auroc:>8.4f} {'-':>8}  {'no positive cases':<20}")
             continue
         
-        delta = float(your_auroc) - float(paper_auroc)
+        delta = float(your_auroc) - paper_auroc
         delta_str = f"{delta:+.4f}"
 
         ci_str = ""
@@ -193,7 +193,7 @@ def plot_roc_curves(all_labels, all_preds, auroc_results,save_path):
         y_score = all_preds[:, i]
 
         result     = auroc_results.get(disease, {})
-        your_auroc = float(result.get("auroc"))
+        your_auroc = result.get("auroc")
 
         # Random baseline — diagonal line
         ax.plot([0, 1], [0, 1],
@@ -272,8 +272,7 @@ def evaluate_full(model, test_loader, device, result_path):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     all_preds, all_labels = get_predictions(model, test_loader, device)
     result = compute_auroc(all_preds,all_labels)
-    print(result)
-    # print_auroc_table(result)
+    print_auroc_table(result)
 
     save_path = (result_path / "plots" / f'{timestamp}.png')
     os.makedirs(save_path, exist_ok=True)
