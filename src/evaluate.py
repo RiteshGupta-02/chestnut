@@ -12,10 +12,11 @@ from matplotlib import pyplot as plt
 import os
 from datetime import datetime
 import json
+import shutil
 
 logging = setup_logger()
 
-DEBUG = True
+DEBUG = False
 
 ALL_DISEASES = [
     "Atelectasis",
