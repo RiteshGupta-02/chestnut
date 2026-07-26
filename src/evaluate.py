@@ -106,7 +106,7 @@ def compute_auroc(all_preds, all_labels):
         score = roc_auc_score(y_true, y_pred)
 
         entry = {
-            "auroc" : f"{score:.4f}",
+            "auroc" : round(score,4),
             "n_positive" : n_positive
         }
 
@@ -193,7 +193,7 @@ def plot_roc_curves(all_labels, all_preds, auroc_results,save_path):
         y_score = all_preds[:, i]
 
         result     = auroc_results.get(disease, {})
-        your_auroc = result.get("auroc")
+        your_auroc = float(result.get("auroc"))
 
         # Random baseline — diagonal line
         ax.plot([0, 1], [0, 1],
