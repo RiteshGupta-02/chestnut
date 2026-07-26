@@ -15,7 +15,7 @@ import json
 
 logging = setup_logger()
 
-DEBUG = False
+DEBUG = True
 
 ALL_DISEASES = [
     "Atelectasis",
@@ -62,8 +62,8 @@ def get_predictions(model, loader, device):
 
     with torch.no_grad():
         for batch_idx, (image, label) in enumerate(loader):
-            # if batch_idx > 5 and DEBUG:
-            #     break
+            if batch_idx > 5 and DEBUG:
+                break
             image = image.to(device)
             out = model(image)
             
@@ -272,19 +272,20 @@ def evaluate_full(model, test_loader, device, result_path):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     all_preds, all_labels = get_predictions(model, test_loader, device)
     result = compute_auroc(all_preds,all_labels)
+    print(result)
     # print_auroc_table(result)
 
     save_path = (result_path / "plots" / f'{timestamp}.png')
     os.makedirs(save_path, exist_ok=True)
 
-    # plot_roc_curves(all_labels, all_preds, result, save_path)
+    plot_roc_curves(all_labels, all_preds, result, save_path)
 
     json_path = result_path / f"auroc_results_{timestamp}.json"
     with open(json_path, "w") as f:
         json.dump({
             "timestamp":    timestamp,
             "mean_auroc":   float(np.mean([
-                r["auroc"] for r in result.values()
+                float(r["auroc"]) for r in result.values()
                 if r.get("auroc") is not None
             ])),
             "paper_mean":   float(np.mean(list(PAPER_AUROC.values()))),
