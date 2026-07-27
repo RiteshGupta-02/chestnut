@@ -67,7 +67,8 @@ def get_predictions(model, loader, device):
                 break
             image = image.to(device)
             out = model(image)
-            
+
+            out.sigmoid_()
             pred_list.append(out.cpu().numpy())
             label_list.append(label.numpy())
 

@@ -38,8 +38,8 @@ def generate_cam(model, image_tensor, target_class_idx, device):
 
     with torch.no_grad():
         output = model(image_tensor)
-    
-
+    output.sigmoid_()
+    print(output)
     # print("Interposed Layer 1 Activations:\n", captured_outputs["last_conv"])
     
 
@@ -224,7 +224,7 @@ def visualize_prediction(model, image_tensor, true_labels,
 
     fig.suptitle(
         "CheXNet — Prediction Visualisation with Class Activation Map",
-        fontsize=14, fontweight="bold", y=1.02
+        fontsize=14, fontweight="bold"
     )
 
     # ── Save if path provided ─────────────────────────────────────────────────
