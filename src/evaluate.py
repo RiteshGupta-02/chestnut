@@ -81,7 +81,51 @@ def get_predictions(model, loader, device):
     
     return all_prediction, all_labels
 
-def compute_auroc(all_preds, all_labels):
+def _bootstrap_auroc(y_true, y_score, n_bootstrap=1000, ci=0.95):
+    """
+    Internal helper — compute bootstrap confidence interval for one disease.
+
+    What is bootstrapping?
+    You resample your test set N times with replacement (like drawing names
+    from a hat and putting them back). Each resample gives a slightly different
+    AUROC. After 1000 resamples, you have a distribution of AUROCs.
+    The 95% confidence interval = the range covering the middle 95% of that distribution.
+
+    This is what research papers report. Not just 0.87 — but 0.87 ± 0.02.
+
+    Args:
+        y_true      : ground truth for one disease (N,)
+        y_score     : predicted probability for one disease (N,)
+        n_bootstrap : number of resamples (1000 is standard)
+        ci          : confidence level (0.95 = 95%)
+
+    Returns:
+        (lower_bound, upper_bound) — the confidence interval
+    """
+    rng     = np.random.RandomState(42)  # fixed seed = reproducible results
+    aurocs  = []
+    n       = len(y_true)
+
+    for _ in range(n_bootstrap):
+        # Sample indices with replacement
+        indices = rng.randint(0, n, size=n)
+        sample_true  = y_true[indices]
+        sample_score = y_score[indices]
+
+        # Skip if sample has no positive cases (AUROC undefined)
+        if sample_true.sum() == 0 or sample_true.sum() == n:
+            continue
+
+        aurocs.append(roc_auc_score(sample_true, sample_score))
+
+    if not aurocs:
+        return (0.5, 0.5)   # fallback if all samples had no positives
+
+    lower = np.percentile(aurocs, (1 - ci) / 2 * 100)
+    upper = np.percentile(aurocs, (1 + ci) / 2 * 100)
+    return (lower, upper)
+
+def compute_auroc(all_preds, all_labels, bootstrap=True, n_bootstrap=1000):
     
     results = {}
 
@@ -112,8 +156,14 @@ def compute_auroc(all_preds, all_labels):
             "n_positive" : n_positive
         }
 
+        if bootstrap:
+            lower, upper = _bootstrap_auroc(y_true, y_pred, n_bootstrap)
+            entry["ci_lower"] = round(lower, 4)
+            entry["ci_upper"] = round(upper, 4)
+
         results[diesease] = entry
         logging.info(f"  {diesease:<22}: AUROC = {score:.4f}"
+                    + (f" (95% CI: {lower:.4f} - {upper:.4f})" if bootstrap else "")
                     + f"  [n_pos={n_positive}]")
 
     return results

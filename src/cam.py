@@ -112,9 +112,9 @@ def visualize_prediction(model, image_tensor, true_labels,
     cam_map, target_prob = generate_cam(model, batched, target_class_idx, device)
 
     # Get all 14 predictions in one forward pass
-    model.eval()
-    with torch.no_grad():
-        all_probs = model(batched.to(device))[0].cpu().numpy()  # (14,)
+    # model.eval()
+    # with torch.no_grad():
+    #     all_probs = model(batched.to(device))[0].cpu().numpy()  # (14,)
 
     # Generate the overlay image
     overlay_img, _ = overlay_cam_image(image_tensor, cam_map, alpha=0.4)

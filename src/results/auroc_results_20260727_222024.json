@@ -1,0 +1,91 @@
+{
+  "timestamp": "20260727_222024",
+  "mean_auroc": 0.8143857142857144,
+  "paper_mean": 0.8413785714285714,
+  "per_disease": {
+    "Atelectasis": {
+      "auroc": 0.77,
+      "n_positive": 3279,
+      "ci_lower": 0.7621,
+      "ci_upper": 0.7787
+    },
+    "Cardiomegaly": {
+      "auroc": 0.8906,
+      "n_positive": 1069,
+      "ci_lower": 0.8815,
+      "ci_upper": 0.9002
+    },
+    "Effusion": {
+      "auroc": 0.823,
+      "n_positive": 4658,
+      "ci_lower": 0.8163,
+      "ci_upper": 0.8295
+    },
+    "Infiltration": {
+      "auroc": 0.6999,
+      "n_positive": 6112,
+      "ci_lower": 0.6921,
+      "ci_upper": 0.7073
+    },
+    "Mass": {
+      "auroc": 0.825,
+      "n_positive": 1748,
+      "ci_lower": 0.8146,
+      "ci_upper": 0.8351
+    },
+    "Nodule": {
+      "auroc": 0.7654,
+      "n_positive": 1623,
+      "ci_lower": 0.7529,
+      "ci_upper": 0.7767
+    },
+    "Pneumonia": {
+      "auroc": 0.7147,
+      "n_positive": 555,
+      "ci_lower": 0.6947,
+      "ci_upper": 0.7376
+    },
+    "Pneumothorax": {
+      "auroc": 0.8654,
+      "n_positive": 2665,
+      "ci_lower": 0.8586,
+      "ci_upper": 0.8719
+    },
+    "Consolidation": {
+      "auroc": 0.7542,
+      "n_positive": 1815,
+      "ci_lower": 0.744,
+      "ci_upper": 0.7645
+    },
+    "Edema": {
+      "auroc": 0.8459,
+      "n_positive": 925,
+      "ci_lower": 0.8349,
+      "ci_upper": 0.8568
+    },
+    "Emphysema": {
+      "auroc": 0.9119,
+      "n_positive": 1093,
+      "ci_lower": 0.9022,
+      "ci_upper": 0.9203
+    },
+    "Fibrosis": {
+      "auroc": 0.8365,
+      "n_positive": 435,
+      "ci_lower": 0.8193,
+      "ci_upper": 0.8547
+    },
+    "Pleural_Thickening": {
+      "auroc": 0.7845,
+      "n_positive": 1143,
+      "ci_lower": 0.7717,
+      "ci_upper": 0.7971
+    },
+    "Hernia": {
+      "auroc": 0.9144,
+      "n_positive": 86,
+      "ci_lower": 0.8737,
+      "ci_upper": 0.9511
+    }
+  }
+}
