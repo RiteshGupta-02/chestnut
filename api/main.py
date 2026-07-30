@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import torch
 from torchvision import transforms
@@ -14,8 +15,7 @@ from model import get_model
 from cam import generate_cam, overlay_cam_image, load_single_image, INFERENCE_TRANSFORM, visualize_prediction
 from chestxray_dataset import ALL_DISEASES
 
-def get_health():
-    pass
+
 
 
 from contextlib import asynccontextmanager
@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
     # runs ONCE when server starts
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model  = get_model(num_classes=14, device=device)
-    ckpt   = torch.load("../src/checkpoint/checkpoint_epoch8.tar", map_location=device)
+    ckpt   = torch.load(Path(__file__).parent.parent /"src/checkpoint/checkpoint_epoch8.tar", map_location=device)
     model.load_state_dict(ckpt["model_state"])
     model.eval()
     model_store["model"]  = model
@@ -47,7 +47,20 @@ async def lifespan(app: FastAPI):
     model_store.clear()
 
 app = FastAPI(lifespan=lifespan)
-transform = transforms.ToTensor()
+
+BASE_DIR = Path(__file__).resolve().parent
+FRONTEND_DIR = BASE_DIR / "frontend"
+
+app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+
+
+@app.get("/")
+async def serve_frontend():
+    return FileResponse(f"{FRONTEND_DIR}/index.html")
+
+@app.get("/health")
+async def get_health():
+    return {"status": "ok"}
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
@@ -123,5 +136,4 @@ async def cam(file: UploadFile = File(...), disease: str = "Pneumonia"):
     Image.fromarray(overlay_img).save(buf, format="PNG")
     buf.seek(0)
     return StreamingResponse(buf, media_type="image/png")
-
 
