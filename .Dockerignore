@@ -1,0 +1,11 @@
+dataset/
+*.pdf
+*.ipynb
+*pycache*/
+*.zip
+*.log
+logs/
+src/logs/
+#*.tar
+*.tar.gz
+src/train.py
