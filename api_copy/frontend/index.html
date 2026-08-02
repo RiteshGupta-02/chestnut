@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CheXNet — Chest X-Ray Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-base:      #080b12;
+      --bg-surface:   #0e1320;
+      --bg-card:      #131929;
+      --bg-hover:     #1a2238;
+      --border:       #1e2d47;
+      --border-lit:   #2a4a7f;
+      --text-primary: #e8edf5;
+      --text-secondary:#7a8ba8;
+      --text-muted:   #3d4f6a;
+      --accent:       #3b82f6;
+      --accent-dim:   #1e3a5f;
+      --green:        #22c55e;
+      --orange:       #f59e0b;
+      --red:          #ef4444;
+      --green-dim:    #14261f;
+      --red-dim:      #2a1010;
+      --radius:       10px;
+      --mono:         'IBM Plex Mono', monospace;
+      --sans:         'Inter', sans-serif;
+    }
+
+    html, body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--sans);
+      font-size: 14px;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .shell {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+      gap: 1rem;
+    }
+    .header-left { flex: 1; }
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .title {
+      font-size: 1.7rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .stat-chips {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      background: var(--bg-surface);
+    }
+    .chip.lit {
+      border-color: var(--border-lit);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .status-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      margin-right: 5px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.4; }
+    }
+
+    /* ── Two-column grid ──────────────────────────────────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+
+    /* ── Cards ────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .card + .card { margin-top: 1.25rem; }
+    .card-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* ── Upload zone ──────────────────────────────────────────── */
+    .upload-zone {
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .upload-zone:hover,
+    .upload-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      line-height: 1;
+    }
+    .upload-primary { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .upload-secondary { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* ── Preview ──────────────────────────────────────────────── */
+    .preview-box {
+      background: var(--bg-base);
+      border-radius: 8px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .preview-box img {
+      max-width: 100%; max-height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+    .preview-box .placeholder-text {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ── Buttons ──────────────────────────────────────────────── */
+    .btn {
+      width: 100%;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .btn-primary:hover:not(:disabled) { background: #2563eb; }
+    .btn-secondary {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--border-lit);
+    }
+    .btn-secondary:hover:not(:disabled) { background: #1e3a6a; }
+
+    /* ── Disease selector ─────────────────────────────────────── */
+    .disease-select {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: var(--sans);
+      margin-bottom: 8px;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a8ba8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+    }
+    .disease-select:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Model status ─────────────────────────────────────────── */
+    .model-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Right column ─────────────────────────────────────────── */
+    .xray-display {
+      background: var(--bg-base);
+      border-radius: 8px;
+      width: 100%;
+      aspect-ratio: 1;
+      max-height: 340px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .xray-display img {
+      max-width: 100%; max-height: 100%;
+      object-fit: contain;
+    }
+    .xray-display .xray-placeholder {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 2;
+    }
+
+    /* Toggle between original and CAM */
+    .view-toggle {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .vtab {
+      flex: 1;
+      padding: 6px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      font-family: var(--mono);
+    }
+    .vtab.active {
+      background: var(--accent-dim);
+      border-color: var(--border-lit);
+      color: var(--accent);
+    }
+
+    /* ── Top finding banner ───────────────────────────────────── */
+    .top-finding {
+      display: none;
+      background: var(--green-dim);
+      border: 1px solid #22c55e30;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .top-finding.show { display: flex; }
+    .top-finding.warn {
+      background: var(--red-dim);
+      border-color: #ef444430;
+    }
+    .tf-label { font-size: 10px; color: var(--text-secondary); font-family: var(--mono); }
+    .tf-name  { font-size: 15px; font-weight: 600; color: var(--green); margin-top: 2px; }
+    .top-finding.warn .tf-name { color: var(--red); }
+    .tf-prob  { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--text-primary); }
+
+    /* ── Prediction bars ──────────────────────────────────────── */
+    .predictions { display: none; }
+    .predictions.show { display: block; }
+
+    .disease-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .disease-row:last-child { border-bottom: none; }
+    .d-name {
+      font-size: 12px;
+      color: var(--text-secondary);
+      width: 145px;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .d-name.positive { color: var(--text-primary); font-weight: 500; }
+    .bar-track {
+      flex: 1;
+      background: var(--bg-surface);
+      border-radius: 3px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 0%;
+    }
+    .bar-green  { background: var(--green); }
+    .bar-orange { background: var(--orange); }
+    .bar-red    { background: var(--red); }
+    .d-prob {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      width: 36px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .d-prob.positive { color: var(--text-primary); }
+
+    /* ── Loading spinner ──────────────────────────────────────── */
+    .spinner {
+      display: none;
+      width: 24px; height: 24px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-state {
+      display: none;
+      text-align: center;
+      padding: 2rem 0;
+    }
+    .loading-state.show { display: block; }
+    .loading-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 10px;
+    }
+
+    /* ── Error banner ─────────────────────────────────────────── */
+    .error-banner {
+      display: none;
+      background: var(--red-dim);
+      border: 1px solid #ef444440;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #f87171;
+      margin-top: 8px;
+      font-family: var(--mono);
+    }
+    .error-banner.show { display: block; }
+
+    /* ── Disclaimer ───────────────────────────────────────────── */
+    .disclaimer {
+      margin-top: 2rem;
+      padding: 12px 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 720px) {
+      .grid { grid-template-columns: 1fr; }
+      .header { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="eyebrow">Deep Learning · Medical Imaging</div>
+      <div class="title">Chest X-Ray Analysis</div>
+      <div class="subtitle">
+        DenseNet-121 trained on 112,120 frontal X-rays from the NIH Clinical Center.<br>
+        Detects 14 thoracic pathologies with mean AUROC 0.8144.
+      </div>
+      <div class="stat-chips">
+        <span class="chip lit"><span class="status-dot"></span>Model ready</span>
+        <span class="chip">14 pathologies</span>
+        <span class="chip">AUROC 0.8144</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="grid">
+
+    <!-- Left: controls -->
+    <div>
+      <!-- Upload -->
+      <div class="card">
+        <div class="card-label">X-Ray Input</div>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept="image/png,image/jpeg"/>
+          <div class="upload-icon">🫁</div>
+          <div class="upload-primary">Drop X-ray here or click to browse</div>
+          <div class="upload-secondary">Frontal view · PNG or JPG</div>
+        </div>
+
+        <!-- Thumbnail preview -->
+        <div class="preview-box" id="previewBox" style="display:none; margin-top:10px;">
+          <img id="previewImg" alt="X-ray preview"/>
+        </div>
+
+        <button class="btn btn-primary" id="analyseBtn" style="margin-top:12px;" disabled>
+          Analyse X-Ray
+        </button>
+
+        <div class="model-status">
+          <span class="status-dot"></span>
+          <span id="statusText">Waiting for image</span>
+        </div>
+      </div>
+
+      <!-- CAM controls -->
+      <div class="card">
+        <div class="card-label">Explain a Finding</div>
+        <select class="disease-select" id="diseaseSelect">
+          <option value="Atelectasis">Atelectasis</option>
+          <option value="Cardiomegaly">Cardiomegaly</option>
+          <option value="Effusion">Effusion</option>
+          <option value="Infiltration">Infiltration</option>
+          <option value="Mass">Mass</option>
+          <option value="Nodule">Nodule</option>
+          <option value="Pneumonia" selected>Pneumonia</option>
+          <option value="Pneumothorax">Pneumothorax</option>
+          <option value="Consolidation">Consolidation</option>
+          <option value="Edema">Edema</option>
+          <option value="Emphysema">Emphysema</option>
+          <option value="Fibrosis">Fibrosis</option>
+          <option value="Pleural_Thickening">Pleural Thickening</option>
+          <option value="Hernia">Hernia</option>
+        </select>
+        <button class="btn btn-secondary" id="camBtn" disabled>
+          Generate Heatmap
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: results -->
+    <div>
+      <div class="card">
+        <div class="card-label">Imaging View</div>
+
+        <!-- View toggle -->
+        <div class="view-toggle">
+          <div class="vtab active" id="tabOriginal" onclick="switchView('original')">Original</div>
+          <div class="vtab" id="tabCam" onclick="switchView('cam')">CAM Heatmap</div>
+        </div>
+
+        <!-- Image display -->
+        <div class="xray-display" id="xrayDisplay">
+          <div class="xray-placeholder" id="xrayPlaceholder">
+            No image uploaded<br>
+            <span style="font-size:10px">Upload a frontal chest X-ray to begin</span>
+          </div>
+          <img id="xrayOriginal" style="display:none" alt="Uploaded X-ray"/>
+          <img id="xrayCam" style="display:none" alt="CAM heatmap"/>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading-state" id="loadingState">
+          <div class="spinner" id="spinner" style="display:inline-block"></div>
+          <div class="loading-label" id="loadingLabel">Running inference...</div>
+        </div>
+
+        <!-- Top finding -->
+        <div class="top-finding" id="topFinding">
+          <div>
+            <div class="tf-label">Top finding</div>
+            <div class="tf-name" id="topName">—</div>
+          </div>
+          <div class="tf-prob" id="topProb">—</div>
+        </div>
+
+        <!-- Error -->
+        <div class="error-banner" id="errorBanner"></div>
+
+        <!-- Prediction bars -->
+        <div class="predictions" id="predictionsPanel">
+          <div class="card-label" style="margin-bottom:8px">All 14 Pathologies</div>
+          <div id="barsContainer"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    ⚠ Research prototype only — not validated for clinical use.
+    Results should not be used to make medical decisions.
+    Model trained on NIH ChestX-ray14 dataset · Replication of Rajpurkar et al. 2017.
+  </div>
+
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let uploadedFile   = null;
+  let originalSrc    = null;
+  let camSrc         = null;
+  let currentView    = 'original';
+  let hasPredictions = false;
+
+  const DISEASES = [
+    "Atelectasis","Cardiomegaly","Effusion","Infiltration","Mass","Nodule",
+    "Pneumonia","Pneumothorax","Consolidation","Edema","Emphysema",
+    "Fibrosis","Pleural_Thickening","Hernia"
+  ];
+
+  // ── DOM refs ───────────────────────────────────────────────────────────────
+  const fileInput       = document.getElementById('fileInput');
+  const uploadZone      = document.getElementById('uploadZone');
+  const previewBox      = document.getElementById('previewBox');
+  const previewImg      = document.getElementById('previewImg');
+  const analyseBtn      = document.getElementById('analyseBtn');
+  const camBtn          = document.getElementById('camBtn');
+  const statusText      = document.getElementById('statusText');
+  const xrayPlaceholder = document.getElementById('xrayPlaceholder');
+  const xrayOriginal    = document.getElementById('xrayOriginal');
+  const xrayCam         = document.getElementById('xrayCam');
+  const loadingState    = document.getElementById('loadingState');
+  const loadingLabel    = document.getElementById('loadingLabel');
+  const spinner         = document.getElementById('spinner');
+  const topFinding      = document.getElementById('topFinding');
+  const topName         = document.getElementById('topName');
+  const topProb         = document.getElementById('topProb');
+  const errorBanner     = document.getElementById('errorBanner');
+  const predictionsPanel= document.getElementById('predictionsPanel');
+  const barsContainer   = document.getElementById('barsContainer');
+  const diseaseSelect   = document.getElementById('diseaseSelect');
+
+  // ── File handling ──────────────────────────────────────────────────────────
+  fileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) handleFile(file);
+  });
+
+  uploadZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadZone.classList.add('drag-over');
+  });
+  uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('drag-over');
+  });
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  function handleFile(file) {
+    if (!file.type.startsWith('image/')) {
+      showError('Please upload a PNG or JPG image.');
+      return;
+    }
+
+    uploadedFile = file;
+    camSrc = null;
+
+    // Show thumbnail in left panel
+    const reader = new FileReader();
+    reader.onload = ev => {
+      originalSrc = ev.target.result;
+
+      // Left thumbnail
+      previewImg.src = originalSrc;
+      previewImg.style.display = 'block';
+      previewBox.style.display = 'flex';
+
+      // Right display
+      xrayPlaceholder.style.display = 'none';
+      xrayOriginal.src = originalSrc;
+      xrayOriginal.style.display = 'block';
+      xrayCam.style.display = 'none';
+      currentView = 'original';
+      setActiveTab('tabOriginal');
+    };
+    reader.readAsDataURL(file);
+
+    // Enable buttons
+    analyseBtn.disabled = false;
+    setStatus('Image loaded — click Analyse to run model');
+    hideError();
+    resetResults();
+  }
+
+  // ── Analyse ────────────────────────────────────────────────────────────────
+  analyseBtn.addEventListener('click', async () => {
+    if (!uploadedFile) return;
+
+    setLoading(true, 'Running inference...');
+    analyseBtn.disabled = true;
+    hideError();
+    resetResults();
+
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
+
+      const res = await fetch('/predict', { method: 'POST', body: formData });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+      renderPredictions(data.predictions);
+      hasPredictions = true;
+      camBtn.disabled = false;
+      setStatus('Analysis complete');
+
+    } catch (err) {
+      showError(err.message || 'Request failed. Is the server running?');
+      setStatus('Error — try again');
+    } finally {
+      setLoading(false);
+      analyseBtn.disabled = false;
+    }
+  });
+
+  // ── CAM ────────────────────────────────────────────────────────────────────
+  camBtn.addEventListener('click', async () => {
+    if (!uploadedFile || !hasPredictions) return;
+
+    const disease = diseaseSelect.value;
+    setLoading(true, `Generating ${disease} heatmap...`);
+    camBtn.disabled = true;
+    hideError();
+
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
+      formData.append('disease', disease);
+
+      const res = await fetch('/cam', { method: 'POST', body: formData });
+
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+      const blob = await res.blob();
+      camSrc = URL.createObjectURL(blob);
+      xrayCam.src = camSrc;
+
+      // Auto-switch to CAM view
+      switchView('cam');
+      setStatus(`Showing ${disease} heatmap`);
+
+    } catch (err) {
+      showError(err.message || 'Heatmap generation failed.');
+      setStatus('Error generating heatmap');
+    } finally {
+      setLoading(false);
+      camBtn.disabled = false;
+    }
+  });
+
+  // ── Render predictions ─────────────────────────────────────────────────────
+  function renderPredictions(predictions) {
+    // Sort by probability descending
+    const sorted = Object.entries(predictions)
+      .sort((a, b) => b[1] - a[1]);
+
+    const [topDisease, topProbVal] = sorted[0];
+
+    // Top finding banner
+    topName.textContent = topDisease.replace('_', ' ');
+    topProb.textContent = (topProbVal).toFixed(1) + '%';
+    topFinding.classList.add('show');
+    if (topProbVal > 0.5) topFinding.classList.add('warn');
+    else topFinding.classList.remove('warn');
+
+    // Bars
+    barsContainer.innerHTML = '';
+    for (const [disease, prob] of sorted) {
+      const pct    = (prob * 100).toFixed(1);
+      const isPos  = prob >= 0.5;
+
+      let barClass = 'bar-green';
+      if (prob >= 0.6) barClass = 'bar-red';
+      else if (prob >= 0.3) barClass = 'bar-orange';
+
+      const row = document.createElement('div');
+      row.className = 'disease-row';
+      row.innerHTML = `
+        <span class="d-name ${isPos ? 'positive' : ''}">${disease.replace('_',' ')}</span>
+        <div class="bar-track">
+          <div class="bar-fill ${barClass}" data-width="${prob * 100}%" style="width:0%"></div>
+        </div>
+        <span class="d-prob ${isPos ? 'positive' : ''}">${prob.toFixed(2)}</span>
+      `;
+      barsContainer.appendChild(row);
+    }
+
+    predictionsPanel.classList.add('show');
+
+    // Animate bars after paint
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.bar-fill').forEach(bar => {
+          bar.style.width = bar.dataset.width;
+        });
+      });
+    });
+  }
+
+  // ── View toggle ────────────────────────────────────────────────────────────
+  function switchView(view) {
+    currentView = view;
+
+    if (view === 'original') {
+      xrayOriginal.style.display = originalSrc ? 'block' : 'none';
+      xrayCam.style.display = 'none';
+      setActiveTab('tabOriginal');
+    } else {
+      xrayOriginal.style.display = 'none';
+      xrayCam.style.display = camSrc ? 'block' : 'none';
+      setActiveTab('tabCam');
+      if (!camSrc) showError('Generate a heatmap first.');
+    }
+  }
+
+  function setActiveTab(id) {
+    document.querySelectorAll('.vtab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function setLoading(on, label='') {
+    loadingState.classList.toggle('show', on);
+    spinner.style.display = on ? 'inline-block' : 'none';
+    loadingLabel.textContent = label;
+  }
+
+  function setStatus(msg) {
+    statusText.textContent = msg;
+  }
+
+  function showError(msg) {
+    errorBanner.textContent = '✗ ' + msg;
+    errorBanner.classList.add('show');
+  }
+
+  function hideError() {
+    errorBanner.classList.remove('show');
+  }
+
+  function resetResults() {
+    topFinding.classList.remove('show','warn');
+    predictionsPanel.classList.remove('show');
+    barsContainer.innerHTML = '';
+    hasPredictions = false;
+    camBtn.disabled = true;
+    camSrc = null;
+  }
+</script>
+</body>
+</html>
