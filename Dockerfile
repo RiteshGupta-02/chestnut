@@ -11,13 +11,17 @@ WORKDIR /app
 # every code change triggers a full pip install.
 # Copying requirements first means pip install only reruns
 # when requirements.txt changes — saves minutes on every rebuild.
-COPY api/requirements.txt .
+COPY api_onnx/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy your source code
 COPY src/ ./src/
-COPY api/ ./api/
-COPY src/checkpoint/checkpoint_epoch8.tar ./src/checkpoint/
+COPY api_onnx/ ./api_onnx/
+COPY src/checkpoint/chexnet_features.onnx ./src/checkpoint/
+COPY src/checkpoint/chexnet_features.onnx.data ./src/checkpoint/
+COPY src/checkpoint/chexnet_full.onnx ./src/checkpoint/
+COPY src/checkpoint/chexnet_full.onnx.data ./src/checkpoint/
+COPY src/checkpoint/classifier_weights.npy ./src/checkpoint/
 
 # Expose port 8080 — GCP Cloud Run expects this port specifically
 EXPOSE 8080
@@ -25,4 +29,4 @@ EXPOSE 8080
 # Start the FastAPI server
 # host 0.0.0.0 = accept connections from outside the container
 # port 8080 = what Cloud Run expects
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "api_onnx.main:app", "--host", "0.0.0.0", "--port", "8080"]

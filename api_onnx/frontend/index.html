@@ -669,7 +669,7 @@
       }
 
       const data = await res.json();
-      renderPredictions(data.predictions);
+      renderPredictions(data);   // pass full response — renderPredictions handles both formats
       hasPredictions = true;
       camBtn.disabled = false;
       setStatus('Analysis complete');
@@ -687,27 +687,46 @@
   camBtn.addEventListener('click', async () => {
     if (!uploadedFile || !hasPredictions) return;
 
+    // ← KEY FIX: read disease value at click time, not at page load
     const disease = diseaseSelect.value;
+
     setLoading(true, `Generating ${disease} heatmap...`);
     camBtn.disabled = true;
     hideError();
 
+    // Clear old CAM immediately so user sees it's regenerating
+    camSrc = null;
+    xrayCam.src = '';
+    xrayCam.style.display = 'none';
+
     try {
       const formData = new FormData();
       formData.append('file', uploadedFile);
-      formData.append('disease', disease);
 
-      const res = await fetch('/cam', { method: 'POST', body: formData });
+      // ← KEY FIX: disease goes as a query param, not form data
+      // avoids multipart parsing issues on some FastAPI versions
+      const url = `/cam?disease=${encodeURIComponent(disease)}`;
+      const res = await fetch(url, { method: 'POST', body: formData });
 
-      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server error ${res.status}: ${text}`);
+      }
 
       const blob = await res.blob();
-      camSrc = URL.createObjectURL(blob);
-      xrayCam.src = camSrc;
 
-      // Auto-switch to CAM view
-      switchView('cam');
-      setStatus(`Showing ${disease} heatmap`);
+      // ← KEY FIX: revoke old object URL to free memory
+      if (camSrc) URL.revokeObjectURL(camSrc);
+
+      camSrc = URL.createObjectURL(blob);
+
+      // ← KEY FIX: set src and wait for image to load BEFORE switching view
+      xrayCam.onload = () => {
+        xrayCam.style.display = 'block';
+        switchView('cam');
+        setStatus(`${disease} heatmap — click Original to compare`);
+      };
+      xrayCam.src = camSrc;
 
     } catch (err) {
       showError(err.message || 'Heatmap generation failed.');
@@ -718,25 +737,54 @@
     }
   });
 
+  // Re-generate CAM automatically when disease dropdown changes
+  // (only if we already have a CAM showing)
+  diseaseSelect.addEventListener('change', () => {
+    if (hasPredictions && camSrc) {
+      // Prompt user to regenerate rather than auto-firing
+      // (auto-fire would spam the server on every dropdown click)
+      setStatus(`Disease changed to ${diseaseSelect.value} — click Generate Heatmap`);
+      camBtn.style.outline = '2px solid var(--accent)';
+      setTimeout(() => { camBtn.style.outline = 'none'; }, 2000);
+    }
+  });
+
   // ── Render predictions ─────────────────────────────────────────────────────
-  function renderPredictions(predictions) {
+  function renderPredictions(data) {
+    // Support both old format (plain dict) and new format (with is_normal)
+    const predictions = data.predictions || data;
+    const isNormal    = data.is_normal !== undefined ? data.is_normal : false;
+    const topDisease  = data.top_finding  || null;
+    const topProbVal  = data.top_probability || 0;
+
     // Sort by probability descending
     const sorted = Object.entries(predictions)
       .sort((a, b) => b[1] - a[1]);
 
-    const [topDisease, topProbVal] = sorted[0];
-
     // Top finding banner
-    topName.textContent = topDisease.replace('_', ' ');
-    topProb.textContent = (topProbVal).toFixed(1) + '%';
-    topFinding.classList.add('show');
-    if (topProbVal > 0.5) topFinding.classList.add('warn');
-    else topFinding.classList.remove('warn');
+    if (isNormal) {
+      topName.textContent = 'No Finding';
+      topProb.textContent = 'Normal';
+      topFinding.classList.add('show');
+      topFinding.classList.remove('warn');
+      // Override colour to green for normal
+      topFinding.style.background = 'var(--green-dim)';
+      topFinding.style.borderColor = '#22c55e30';
+      document.querySelector('.tf-name').style.color = 'var(--green)';
+    } else {
+      topName.textContent = (topDisease || sorted[0][0]).replace(/_/g, ' ');
+      topProb.textContent = ((topProbVal || sorted[0][1]) * 100).toFixed(2) + '%';
+      topFinding.classList.add('show');
+      topFinding.classList.add('warn');
+      topFinding.style.background = '';
+      topFinding.style.borderColor = '';
+      document.querySelector('.tf-name').style.color = '';
+    }
 
     // Bars
     barsContainer.innerHTML = '';
     for (const [disease, prob] of sorted) {
-      const pct    = (prob * 100).toFixed(1);
+      const pct    = (prob * 100).toFixed(2);
       const isPos  = prob >= 0.5;
 
       let barClass = 'bar-green';
@@ -773,13 +821,20 @@
 
     if (view === 'original') {
       xrayOriginal.style.display = originalSrc ? 'block' : 'none';
-      xrayCam.style.display = 'none';
+      xrayCam.style.display      = 'none';
+      xrayPlaceholder.style.display = originalSrc ? 'none' : 'flex';
       setActiveTab('tabOriginal');
+
     } else {
-      xrayOriginal.style.display = 'none';
-      xrayCam.style.display = camSrc ? 'block' : 'none';
+      // Only switch to CAM view if we actually have a loaded CAM image
+      if (!camSrc) {
+        showError('Generate a heatmap first using the button below.');
+        return;
+      }
+      xrayOriginal.style.display    = 'none';
+      xrayCam.style.display         = 'block';
+      xrayPlaceholder.style.display = 'none';
       setActiveTab('tabCam');
-      if (!camSrc) showError('Generate a heatmap first.');
     }
   }
 

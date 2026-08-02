@@ -1,12 +1,8 @@
+onnxruntime
+opencv-python-headless
+matplotlib
+numpy
+Pillow
 fastapi
 uvicorn[standard]
 python-multipart
-torch
-torchvision
-opencv-python-headless
-Pillow
-numpy
-matplotlib
-scikit-learn
-pandas
-onnxruntime

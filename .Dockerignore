@@ -13,3 +13,4 @@ logs/
 *.log
 *.tar.gz
 src/train.py
+api/

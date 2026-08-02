@@ -1,22 +1,34 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Query
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import io
-from PIL import Image
 from pathlib import Path
 import sys
 import onnxruntime as ort
-from load_image_tensor import load_image_tensor, stable_sigmoid
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-from cam_onnx import build_cam_response, preprocess_image, generate_cam_onnx
-from chestxray_dataset import ALL_DISEASES
+from cam_onnx import build_cam_response, preprocess_image, generate_cam_onnx,stable_sigmoid
 
 
 
-
+ALL_DISEASES = [
+    "Atelectasis",
+    "Cardiomegaly",
+    "Effusion",
+    "Infiltration",
+    "Mass",
+    "Nodule",
+    "Pneumonia",
+    "Pneumothorax",
+    "Consolidation",
+    "Edema",
+    "Emphysema",
+    "Fibrosis",
+    "Pleural_Thickening",
+    "Hernia",
+]
 from contextlib import asynccontextmanager
 
 model_store = {}  # global dict to hold model between requests
@@ -25,22 +37,22 @@ model_store = {}  # global dict to hold model between requests
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     
-
+    sys.path.insert(0, str(Path(__file__).parent.parent))
     # Full model — for /predict
     model_store["predict_session"] = ort.InferenceSession(
-        "../src/checkpoint/chexnet_full.onnx",
+        Path(__file__).parent.parent/"src/checkpoint/chexnet_full.onnx",
         providers=["CPUExecutionProvider"]
     )
 
     # Feature extractor — for /cam
     model_store["feature_session"] = ort.InferenceSession(
-        "../src/checkpoint/chexnet_features.onnx",
+        Path(__file__).parent.parent /"src/checkpoint/chexnet_features.onnx",
         providers=["CPUExecutionProvider"]
     )
 
     # Classifier weights — for CAM dot product
     model_store["classifier_weights"] = np.load(
-        "../src/checkpoint/classifier_weights.npy"
+        Path(__file__).parent.parent /"src/checkpoint/classifier_weights.npy"
     )
 
     print("All models loaded ")
@@ -79,9 +91,6 @@ async def predict(file: UploadFile = File(...)):
     
     # 3. Convert to PyTorch Tensor (Shape: C, H, W)
     model = model_store['predict_session']
-    prob = None
-    top_finding_prob = None
-    top_finding_name = None
 
     output = model.run(
         None,
@@ -90,25 +99,31 @@ async def predict(file: UploadFile = File(...)):
 
     output = stable_sigmoid(output[0])
     
-    prob = {disease : float(probabilities*100) for disease,probabilities in zip(ALL_DISEASES, output[0]) }
-    top_finding_prob = max(output[0])
+    prob = {disease : float(probabilities) for disease,probabilities in zip(ALL_DISEASES, output[0]) }
+    top_finding_name = max(prob, key=prob.get)
+    top_finding_prob = prob[top_finding_name]
     
-    for k, v in prob.items():
-        if v == top_finding_prob:
-            top_finding_name = k
-    
+    if top_finding_prob < 0.5:
+        top_finding   = "No Finding"
+        top_prob      = top_finding_prob
+        is_normal     = True
+    else:
+        top_finding   = top_finding_name
+        top_prob      = top_finding_prob
+        is_normal     = False
 
     jsonresponse = {
     "predictions": prob,
     "top_finding": top_finding_name,
-    "top_probability": float(top_finding_prob)
+    "top_probability": float(top_finding_prob),
+    "is normal" : is_normal,
     }
     return JSONResponse(status_code=201, content=jsonresponse)
 
 @app.post("/cam")
 async def cam_endpoint(
     file: UploadFile = File(...),
-    disease: str = "Pneumonia"
+    disease: str = Query(default="Pneumonia")
 ):
     if disease not in ALL_DISEASES:
         raise HTTPException(400, f"Unknown disease. Choose from: {ALL_DISEASES}")

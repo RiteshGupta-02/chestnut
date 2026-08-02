@@ -5,16 +5,29 @@ No PyTorch needed at runtime. No hooks needed.
 
 import cv2
 import numpy as np
-import onnxruntime as ort
 from PIL import Image
 import io
 import matplotlib
 matplotlib.use("Agg")          # no display needed on server
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from pathlib import Path
 
-from chestxray_dataset import ALL_DISEASES
+ALL_DISEASES = [
+    "Atelectasis",
+    "Cardiomegaly",
+    "Effusion",
+    "Infiltration",
+    "Mass",
+    "Nodule",
+    "Pneumonia",
+    "Pneumothorax",
+    "Consolidation",
+    "Edema",
+    "Emphysema",
+    "Fibrosis",
+    "Pleural_Thickening",
+    "Hernia",
+]
 
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406])
 IMAGENET_STD  = np.array([0.229, 0.224, 0.225])
@@ -61,7 +74,7 @@ def generate_cam_onnx(feature_session, classifier_weights,
         feature_session     : onnxruntime.InferenceSession for features model
         classifier_weights  : numpy (14, 1024) — loaded from .npy file
         image_array         : numpy (1, 3, 224, 224) float32
-        target_class_idx    : int 0–13
+        target_class_idx    : int 0-13
 
     Returns:
         cam_map  : numpy (7, 7) — raw importance values
@@ -226,3 +239,11 @@ def build_cam_response(image_array, cam_map, predictions, target_disease):
     plt.close(fig)
     buf.seek(0)
     return buf.read()
+
+def stable_sigmoid(x):
+    """Numerically stable sigmoid function."""
+    return np.where(
+        x >= 0, 
+        1 / (1 + np.exp(-x)), 
+        np.exp(x) / (1 + np.exp(x))
+    )
