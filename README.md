@@ -4,7 +4,7 @@
 
 A deep learning application for automated detection and localization of 14 common thoracic diseases in chest X-ray images using DenseNet-121 and PyTorch.
 
-** Live Demo**: [https://chestnut-yrjc.onrender.com](https://chestnut-yrjc.onrender.com/)
+**Live Demo** : [https://chestnut-yrjc.onrender.com](https://chestnut-yrjc.onrender.com/)
 
 ---
 
